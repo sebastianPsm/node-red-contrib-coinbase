@@ -1,0 +1,6 @@
+*.log
+bower_components/
+node_modules/
+deploy.sh
+node-red-contrib-coinbase.tar.gz
+unpack.sh

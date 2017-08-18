@@ -1,0 +1,230 @@
+<script type="text/javascript" src="coinbase/js/crypto-js/crypto-js.js"></script>
+<script type="text/javascript" src="coinbase/js/crypto-js/enc-base64.js"></script>
+<script type="text/javascript" src="coinbase/js/browser-request/dist/browser/request-min.js"></script>
+<script type="text/javascript">
+    getAccountIds = function(node, apiKey, apiSecret) {
+        var timestamp = Math.floor(Date.now() / 1000);
+        var path = "/v2/accounts";
+        var req = {
+            method: 'GET',
+            path: 'https://api.coinbase.com' + path,
+            body: ''
+        };
+        var message = timestamp + req.method + path + req.body;
+        
+        var signature = CryptoJS.HmacSHA256(message, apiSecret).toString();
+        var options = {
+            url: req.path,
+            method: req.method,
+            headers: {
+                'CB-ACCESS-SIGN': signature,
+                'CB-ACCESS-TIMESTAMP': timestamp,
+                'CB-ACCESS-KEY': apiKey,
+                'CB-VERSION': '2015-07-22'
+            },
+            json: true
+        };
+        request(options, function(err, response, body) {
+            if (err) console.log(err);
+
+            var accounts = {};
+            response.body.data.forEach(function(item) {
+                accounts[item.id] = item.name;
+            });
+            node.accounts = JSON.stringify(accounts);
+            $("#node-input-accounts").val(node.accounts);
+
+            var accounts = JSON.parse($("#node-input-accounts").val());
+            if(accounts) {
+                $("#node-input-account").empty();
+                for (var key in accounts) {
+                    $("#node-input-account").append('<option value=' + key + '>' + accounts[key] + '</option>');
+                }
+            }
+        });
+    }
+    RED.nodes.registerType('coinbase-client',{
+        category: 'coinbase',
+        color: '#1D75B7',
+        defaults: {
+            name: {value:""},
+            account: {value:""},
+            accounts: {value:""},
+            accountSelected: {value:""}
+        },
+        credentials: {
+            apiKey: {type:"text"},
+            apiSecret: {type:"text"}
+        },
+        inputs:0,
+        outputs:1,
+        icon: "node-red-contrib-coinbase.png",
+        label: function() {
+            return this.name||"coinbase-client";
+        },
+        paletteLabel: "Client",
+        label: "Client",
+        oneditprepare: function() {
+            var n = this;
+
+            $("#node-input-refresh-account").click(function(){
+                var apiKey = $("#node-input-apiKey").val();
+                var apiSecret = $("#node-input-apiSecret").val();
+
+                if(apiKey && apiSecret)
+                    getAccountIds(n, apiKey, apiSecret);
+            });
+            
+            var accounts = JSON.parse($("#node-input-accounts").val());
+            if(accounts) {
+                $("#node-input-account").empty();
+                for (var key in accounts) {
+                    $("#node-input-account").append('<option value=' + key + '>' + accounts[key] + '</option>');
+                }
+            }
+            $("#node-input-account").val($("#node-input-accountSelected").val());
+        },
+        oneditsave: function() {
+            this.accountSelected = $("#node-input-account").val();
+            $("#node-input-accountSelected").val(this.accountSelected);
+            
+        }
+    });
+    RED.nodes.registerType('coinbase-get-buy-price',{
+        category: 'coinbase',
+        color: '#1D75B7',
+        defaults: {
+            name: {value:""},
+            currencyPair: {value:"BTC-USD", required: true},
+            interval: {value: 1000, required: true}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "node-red-contrib-coinbase.png",
+        label: function() {
+            return this.name||"coinbase-get-buy-price";
+        },
+        paletteLabel: "Get buy price",
+        label: "Get buy price"
+    });
+    RED.nodes.registerType('coinbase-get-account', {
+        category: 'coinbase',
+        color: '#1D75B7',
+        defaults: {
+            name: {value:""},
+            interval: {value: 10000, required: true}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "node-red-contrib-coinbase.png",
+        label: function() {
+            return this.name||"coinbase-get-account";
+        },
+        paletteLabel: "Get account",
+        label: "Get account"
+    })
+</script>
+
+<script type="text/x-red" data-template-name="coinbase-client">
+    <div class="form-row">
+        <div class="form-row">
+            <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+            <input type="text" id="node-input-name" placeholder="Name">
+        </div>
+
+        <div class="form-row">
+            <label for="node-input-apiKey"><i class="fa fa-key"></i> API Key</label>
+            <input type="text" id="node-input-apiKey">
+        </div>
+
+        <div class="form-row">
+            <label for="node-input-apiSecret"><i class="fa fa-user-secret"></i> API Secret</label>
+            <input type="text" id="node-input-apiSecret">
+        </div>
+
+        <div class="form-row">
+            <label for="node-input-account"><i class="fa fa-address-card"></i> Account</label>
+            <select type="text" id="node-input-account"></select>
+            <a id="node-input-refresh-account" class="editor-button">
+                <i class="fa fa-refresh"></i>
+            </a>
+        </div>
+
+        <div class="form-row" style="visibility: hidden">
+            <label for="node-input-accounts">Accounts</label>
+            <input type="text" id="node-input-accounts">
+        </div>
+        <div class="form-row" style="visibility: hidden">
+            <label for="node-input-accountSelected">Account selected</label>
+            <input type="text" id="node-input-accountSelected">
+        </div>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="coinbase-client">
+    <p>Get the total price to buy one bitcoin or ether.</p>
+    <h3>Parameters</h3>
+    <p><i>API Key</i> and <i>API Secret</i> from <a href="https://coinbase.com/settings/api">coinbase</a></p>
+    <h3>Outputs</h3>
+    <p>Coinbase API handle (msg.coinbase) for the other nodes from this category.</p>
+    <p>Account ID (msg.accountId) for the <i>Get account</i> node.</p>
+</script>
+
+<script type="text/x-red" data-template-name="coinbase-get-buy-price">
+    <div class="form-row">
+        <div class="form-row">
+            <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+            <input type="text" id="node-input-name" placeholder="Name">
+        </div>
+
+        <div class="form-row">
+            <label for="node-input-currencyPair"><i class="fa fa-money"></i> Currency pair</label>
+            <input type="text" id="node-input-currencyPair">
+        </div>
+
+        <div class="form-row">
+            <label for="node-input-interval"><i class="fa fa-clock-o"></i> Interval</label>
+            <input type="text" id="node-input-interval">
+        </div>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="coinbase-get-buy-price">
+    <p>Get the total price to buy one bitcoin or ether.</p>
+    <h3>Parameters</h3>
+    <p><i>Currency pair</i> is a string like 'BTC-USD'. Refer to coinbase <a href="https://developers.coinbase.com/api/v2#currencies">API</a> doc for details.</p>
+    <p><i>Interval</i> specifies how often the get-buy-price API should called in milliseconds.</p>
+    <h3>Inputs</h3>
+    <p>Coinbase API handle from <i>client</i> node.</p>
+    <h3>Outputs</h3>
+    <p>Output an object like:</p>
+    <pre>var msg = {
+        payload : "123.45",
+        currency : "BTC"
+    }</pre>
+</script>
+
+<script type="text/x-red" data-template-name="coinbase-get-account">
+    <div class="form-row">
+        <div class="form-row">
+            <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+            <input type="text" id="node-input-name" placeholder="Name">
+        </div>
+
+        <div class="form-row">
+            <label for="node-input-interval"><i class="fa fa-clock-o"></i> Interval</label>
+            <input type="text" id="node-input-interval">
+        </div>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="coinbase-get-account">
+    <p>Get balance from account.</p>
+    <h3>Parameters</h3>
+    <p><i>Interval</i> specifies how often the get-buy-price API should called in milliseconds.</p>
+    <h3>Inputs</h3>
+    <p>Coinbase API handle from <i>Client</i> node.</p>
+    <p>Account object from <i>Client</i> node.</p>
+    <h3>Outputs</h3>
+    <p>Account object (msg.account) for <i>Sell</i>, <i>Send</i>, <i>Request</i>, <i>Transaction</i> nodes</p>
+</script>
