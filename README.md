@@ -17,7 +17,7 @@ Some Coinbase related nodes for [Node RED](https://nodered.org/)
 
 Connect with *Client* node and enter *Currency pair* property (e.g. ETH-EUR or BTC-USD).
 
-### *get account* node
+### *Get account* node
 
 Connect with *Client* node. Node will output something like the following on ```msg.account```
 
@@ -48,6 +48,5 @@ Node RED provide credential properties. This properties will not exported in the
 
 ## Todo
 
-- <i>Sell</i>, <i>Send</i>, <i>Request</i>, <i>Transaction</i> nodes
-- Separate code files for each node for the sake of simplicity
+- <i>Send</i>, <i>Request</i>, <i>Transaction</i> nodes
 - More?
