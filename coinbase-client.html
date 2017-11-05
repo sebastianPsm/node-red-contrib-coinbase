@@ -90,39 +90,6 @@
             
         }
     });
-    RED.nodes.registerType('coinbase-get-buy-price',{
-        category: 'coinbase',
-        color: '#1D75B7',
-        defaults: {
-            name: {value:""},
-            currencyPair: {value:"BTC-USD", required: true},
-            interval: {value: 1000, required: true}
-        },
-        inputs:1,
-        outputs:1,
-        icon: "node-red-contrib-coinbase.png",
-        label: function() {
-            return this.name||"coinbase-get-buy-price";
-        },
-        paletteLabel: "Get buy price",
-        label: "Get buy price"
-    });
-    RED.nodes.registerType('coinbase-get-account', {
-        category: 'coinbase',
-        color: '#1D75B7',
-        defaults: {
-            name: {value:""},
-            interval: {value: 10000, required: true}
-        },
-        inputs:1,
-        outputs:1,
-        icon: "node-red-contrib-coinbase.png",
-        label: function() {
-            return this.name||"coinbase-get-account";
-        },
-        paletteLabel: "Get account",
-        label: "Get account"
-    })
 </script>
 
 <script type="text/x-red" data-template-name="coinbase-client">
