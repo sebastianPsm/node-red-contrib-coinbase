@@ -41,7 +41,7 @@ module.exports = function(RED) {
      */
     RED.httpAdmin.get('/coinbase/js/*', function(req, res){
         var options = {
-            root: __dirname + '/bower_components/',
+            root: __dirname + '/../',
             dotfiles: 'deny'
         };
         res.sendFile(req.params[0], options);
